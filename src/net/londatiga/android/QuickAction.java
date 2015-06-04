@@ -84,7 +84,7 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
         if (mOrientation == HORIZONTAL) {
             setRootViewId(R.layout.popup_horizontal);
         } else {
-            setRootViewId(R.layout.popup_vertical);
+            setRootViewId(R.layout.popup_vertical2);
         }
 
         mAnimStyle 	= ANIM_AUTO;
@@ -109,10 +109,15 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 	 */
 	public void setRootViewId(int id) {
 		mRootView	= (ViewGroup) mInflater.inflate(id, null);
-		mTrack 		= (ViewGroup) mRootView.findViewById(R.id.tracks);
+		mTrack 		= (ViewGroup) mRootView.findViewById(R.id.menu_items);
 
 		mArrowDown 	= (ImageView) mRootView.findViewById(R.id.arrow_down);
 		mArrowUp 	= (ImageView) mRootView.findViewById(R.id.arrow_up);
+
+        if (mDrawArrows == false) {
+            // mArrowUp.setVisibility(View.GONE);
+            // mArrowDown.setVisibility(View.GONE);
+        }
 
 		mScroller	= (ScrollView) mRootView.findViewById(R.id.scroller);
 		
@@ -188,7 +193,6 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 				
                 if (!getActionItem(pos).isSticky()) {  
                 	mDidAction = true;
-                	
                     dismiss();
                 }
 			}
@@ -198,18 +202,24 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		container.setClickable(true);
 			 
 		if (mOrientation == HORIZONTAL && mChildPos != 0) {
-            View separator = mInflater.inflate(R.layout.horiz_separator, null);
-            
+            View separator = mInflater.inflate(R.layout.separator_horiz, null);
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.FILL_PARENT);
-            
             separator.setLayoutParams(params);
             separator.setPadding(5, 0, 5, 0);
-            
             mTrack.addView(separator, mInsertPos);
-            
             mInsertPos++;
         }
-		
+		if (mOrientation == VERTICAL && mChildPos != 0) {
+            View separator = mInflater.inflate(R.layout.separator_verti, null);
+            // RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+            // separator.setLayoutParams(params);
+            mTrack.addView(separator, mInsertPos);
+            mInsertPos++;
+        }
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+        params.setMargins(0, 0, 0, 0);
+        container.setLayoutParams(params);
+        container.setPadding(0, 0, 0, 0);
 		mTrack.addView(container, mInsertPos);
 		
 		mChildPos++;
@@ -258,7 +268,7 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 			if (anchor.getWidth() > rootWidth) {
 				xPos = anchorRect.centerX() - (rootWidth/2);
 			} else {
-				xPos = anchorRect.left;
+				xPos = anchorRect.left - rootWidth + anchorRect.width()/4;
 			}
 			
 			arrowPos = anchorRect.centerX()-xPos;
@@ -267,7 +277,8 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		int dyTop			= anchorRect.top;
 		int dyBottom		= screenHeight - anchorRect.bottom;
 
-		boolean onTop		= (dyTop > dyBottom) ? true : false;
+		// boolean onTop		= (dyTop > dyBottom) ? true : false;
+		boolean onTop		= (dyBottom < rootHeight) ? true : false;
 
 		if (onTop) {
 			if (rootHeight > dyTop) {
@@ -275,10 +286,10 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 				LayoutParams l 	= mScroller.getLayoutParams();
 				l.height		= dyTop - anchor.getHeight();
 			} else {
-				yPos = anchorRect.top - rootHeight;
+				yPos = anchorRect.top - rootHeight + anchorRect.height()/4;
 			}
 		} else {
-			yPos = anchorRect.bottom;
+			yPos = anchorRect.bottom - anchorRect.height()/4;
 			
 			if (rootHeight > dyBottom) { 
 				LayoutParams l 	= mScroller.getLayoutParams();
@@ -286,7 +297,7 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 			}
 		}
 		
-		showArrow(((onTop) ? R.id.arrow_down : R.id.arrow_up), arrowPos);
+		// showArrow(((onTop) ? R.id.arrow_down : R.id.arrow_up), arrowPos);
 		
 		setAnimationStyle(screenWidth, anchorRect.centerX(), onTop);
 		
@@ -302,7 +313,7 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 	 * 		  and vice versa
 	 */
 	private void setAnimationStyle(int screenWidth, int requestedX, boolean onTop) {
-		int arrowPos = requestedX - mArrowUp.getMeasuredWidth()/2;
+		int arrowPos = requestedX - (mDrawArrows ? mArrowUp.getMeasuredWidth()/2 : 0);
 
 		switch (mAnimStyle) {
 		case ANIM_GROW_FROM_LEFT:
@@ -322,18 +333,22 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 		break;
 		
 		case ANIM_AUTO:
-			if (arrowPos <= screenWidth/4) {
-				mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Left : R.style.Animations_PopDownMenu_Left);
-			} else if (arrowPos > screenWidth/4 && arrowPos < 3 * (screenWidth/4)) {
-				mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Center : R.style.Animations_PopDownMenu_Center);
-			} else {
-				mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Right : R.style.Animations_PopDownMenu_Right);
-			}
+			// if (arrowPos <= screenWidth/4) {
+			// 	mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Left : R.style.Animations_PopDownMenu_Left);
+			// } else if (arrowPos > screenWidth/4 && arrowPos < 3 * (screenWidth/4)) {
+			// 	mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Center : R.style.Animations_PopDownMenu_Center);
+			// } else {
+			// 	mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Right : R.style.Animations_PopDownMenu_Right);
+			// }
 					
+            mWindow.setAnimationStyle((onTop) ? R.style.Animations_PopUpMenu_Right : R.style.Animations_PopDownMenu_Right);
+
 			break;
 		}
 	}
 	
+	private boolean mDrawArrows = false;
+
 	/**
 	 * Show arrow
 	 * 
@@ -341,6 +356,12 @@ public class QuickAction extends PopupWindows implements OnDismissListener {
 	 * @param requestedX distance from left screen
 	 */
 	private void showArrow(int whichArrow, int requestedX) {
+        if (mDrawArrows == false) {
+            // mArrowUp.setVisibility(View.GONE);
+            // mArrowDown.setVisibility(View.GONE);
+            return;
+        }
+
         final View showArrow = (whichArrow == R.id.arrow_up) ? mArrowUp : mArrowDown;
         final View hideArrow = (whichArrow == R.id.arrow_up) ? mArrowDown : mArrowUp;
 
